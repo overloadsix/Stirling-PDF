@@ -567,12 +567,11 @@ function GridView({
     true,
   );
   return (
-    // Cards contain menus and checkboxes; retain list semantics and name selected cards explicitly.
     <div
       className="files-page-grid"
       role="listbox"
       aria-multiselectable="true"
-      aria-label={t("filesPage.files", "Files")}
+      aria-label="Files"
       ref={setContainer}
     >
       {padTop > 0 && (

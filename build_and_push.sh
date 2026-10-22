@@ -18,6 +18,8 @@ git add -- frontend/src/editor/core/components/home/LegacyHome.tsx frontend/src/
   frontend/src/editor/core/hooks/useDesktopSelection.ts frontend/src/editor/core/hooks/useDesktopSelection.test.tsx \
   frontend/src/editor/core/styles/desktopSelection.css frontend/src/editor/core/pages/HomePage.tsx \
   frontend/src/editor/core/components/filesPage/FileGrid.tsx frontend/src/editor/core/components/shared/FileCard.tsx \
+  frontend/src/editor/core/components/filesPage/FileGrid.accessibility.test.tsx \
+  frontend/src/editor/core/components/filesPage/LibraryFilePicker.test.tsx \
   frontend/src/editor/core/components/tools/toolPicker/ToolButton.tsx \
   frontend/src/editor/core/components/tools/toolPicker/ToolSearch.tsx \
   frontend/src/editor/core/components/tools/shared/SuggestedToolsSection.tsx \

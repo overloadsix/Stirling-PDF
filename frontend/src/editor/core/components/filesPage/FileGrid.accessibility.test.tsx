@@ -55,21 +55,22 @@ function grid(overrides: Partial<ComponentProps<typeof FileGrid>>) {
 }
 
 describe("file library accessibility", () => {
-  it("announces a single selected card without changing its list semantics", () => {
+  it("announces a single selected card through listbox selection semantics", () => {
     const view = render(grid({}));
-    expect(
-      screen.getByRole("listitem", { name: "README" }),
-    ).not.toHaveAttribute("aria-selected");
+    expect(screen.getByRole("option", { name: "README" })).toHaveAttribute(
+      "aria-selected",
+      "false",
+    );
 
     view.rerender(grid({ selectedFileIds: new Set([stored.id]) }));
-    const selected = screen.getByRole("listitem", {
+    const selected = screen.getByRole("option", {
       name: "README, sélectionné",
     });
-    expect(selected).not.toHaveAttribute("aria-selected");
+    expect(selected).toHaveAttribute("aria-selected", "true");
     expect(within(selected).queryByRole("checkbox")).not.toBeInTheDocument();
 
     view.rerender(grid({}));
-    expect(screen.getByRole("listitem", { name: "README" })).toBeVisible();
+    expect(screen.getByRole("option", { name: "README" })).toBeVisible();
   });
 
   it("marks selected list rows without giving them checkboxes", () => {
@@ -108,8 +109,8 @@ describe("file library accessibility", () => {
         },
       }),
     );
-    const card = screen.getByRole("listitem", { name: "README, sélectionné" });
-    expect(card).not.toHaveAttribute("aria-selected");
+    const card = screen.getByRole("option", { name: "README, sélectionné" });
+    expect(card).toHaveAttribute("aria-selected", "true");
     expect(within(card).getByRole("checkbox")).toBeChecked();
   });
 

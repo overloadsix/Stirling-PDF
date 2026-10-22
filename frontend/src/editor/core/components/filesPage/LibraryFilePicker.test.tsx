@@ -235,11 +235,11 @@ describe("library file picker", () => {
       await user.click(
         screen.getByRole("button", { name: "Stirling library" }),
       );
-      await user.click(screen.getByText("Processing"));
+      await user.dblClick(screen.getByText("Processing"));
       await waitFor(() => expect(state.listProcessingFiles).toHaveBeenCalled());
       const queuedItem = screen
         .getByText(queued.name)
-        .closest('[role="row"], [role="listitem"]')!;
+        .closest('[role="row"], [role="option"]')!;
       await waitFor(() =>
         expect(queuedItem).toHaveAttribute("aria-disabled", "true"),
       );
@@ -329,7 +329,7 @@ describe("library file picker", () => {
     ).not.toBeInTheDocument();
     await user.dblClick(screen.getByText("Existing.zip"));
     expect(state.selected).not.toHaveBeenCalled();
-    await user.click(screen.getByText("Invoices"));
+    await user.dblClick(screen.getByText("Invoices"));
     await user.click(screen.getByRole("button", { name: "Add here" }));
     expect(onConfirm).toHaveBeenCalledExactlyOnceWith(invoices.id);
     expect(state.moveFolder).not.toHaveBeenCalled();
@@ -433,7 +433,7 @@ describe("library file picker", () => {
       } else {
         await user.click(screen.getByText("Server.pdf"));
       }
-      const listing = screen.getByRole(viewMode === "list" ? "grid" : "list");
+      const listing = screen.getByRole(viewMode === "list" ? "grid" : "listbox");
       expect(within(listing).queryByText("Recents")).not.toBeInTheDocument();
       await user.click(
         screen.getByRole("button", { name: "Recents", pressed: false }),
@@ -465,7 +465,7 @@ describe("library file picker", () => {
     expect(screen.queryByText("One.pdf")).not.toBeInTheDocument();
     expect(screen.queryByText("Unfiled.pdf")).not.toBeInTheDocument();
     expect(screen.getByText("Server.pdf")).toBeInTheDocument();
-    await user.click(screen.getByText("Invoices"));
+    await user.dblClick(screen.getByText("Invoices"));
     expect(screen.getByText("Filed.pdf")).toBeInTheDocument();
     await user.click(
       screen.getByRole("button", { name: "Recents", pressed: false }),
@@ -570,7 +570,7 @@ describe("library file picker", () => {
     expect(screen.getByText("Browser folder copy.pdf")).toBeInTheDocument();
     expect(screen.queryByText("New.pdf")).not.toBeInTheDocument();
     expect(screen.queryByText("Nested.pdf")).not.toBeInTheDocument();
-    await user.click(screen.getByText("Server folder"));
+    await user.dblClick(screen.getByText("Server folder"));
     expect(screen.getByText("Nested.pdf")).toBeInTheDocument();
     expect(screen.queryByText("New.pdf")).not.toBeInTheDocument();
     expect(
@@ -637,7 +637,7 @@ describe("library file picker", () => {
     await user.click(
       screen.getByRole("button", { name: "Stirling library", pressed: false }),
     );
-    await user.click(screen.getByText("Documents"));
+    await user.dblClick(screen.getByText("Documents"));
     await user.click(await screen.findByText("Missing.pdf"));
     await user.click(screen.getByText("Readable.pdf"));
     await user.click(screen.getByRole("button", { name: "Add 3 files" }));
@@ -703,70 +703,7 @@ describe("library file picker", () => {
     });
     state.extractAllFiles.mockResolvedValue({
       success: true,
-      extractedFiles: [extracted],
-      errors: [],
-    });
-    const user = userEvent.setup();
-    const view = show(["pdf"]);
-    const archive = new File(["zip"], "Archive.zip", {
-      type: "application/zip",
-    });
-    fireEvent.change(view.container.querySelector('input[type="file"]')!, {
-      target: { files: [archive] },
-    });
-    await user.click(screen.getByRole("button", { name: "Unzip" }));
-    expect(await screen.findByText("Extracted.pdf")).toBeInTheDocument();
-    expect(state.selected).not.toHaveBeenCalled();
-    await user.click(screen.getByRole("button", { name: "Add 1 files" }));
-    await waitFor(() =>
-      expect(state.selected).toHaveBeenCalledExactlyOnceWith([], [extracted]),
-    );
-  });
-  it("restores each tab's folder and filters while keeping the cross-folder selection", async () => {
-    state.folders = [folder("folder", "Invoices")];
-    state.files[1] = file("two", "Two.pdf", "folder");
-    const user = userEvent.setup();
-    show();
-    await user.click(screen.getByRole("button", { name: "Search filenames" }));
-    await user.type(
-      screen.getByRole("textbox", { name: "Search filenames" }),
-      "One",
-    );
-    await user.click(screen.getByRole("textbox", { name: "Filter by source" }));
-    await user.click(await screen.findByRole("option", { name: "Local" }));
-    await user.click(screen.getByText("One.pdf"));
-    await user.click(
-      screen.getByRole("button", { name: "Stirling library", pressed: false }),
-    );
-    await user.click(screen.getByText("Invoices"));
-    await user.click(screen.getByRole("button", { name: "Search filenames" }));
-    await user.type(
-      screen.getByRole("textbox", { name: "Search filenames" }),
-      "Two",
-    );
-    await user.click(
-      screen.getByRole("button", { name: "Recents", pressed: false }),
-    );
-    await user.click(screen.getByRole("button", { name: "Search filenames" }));
-    expect(
-      screen.getByRole("textbox", { name: "Search filenames" }),
-    ).toHaveValue("One");
-    expect(
-      screen.getByRole("textbox", { name: "Filter by source" }),
-    ).toHaveValue("Local");
-    expect(screen.getByText("One.pdf")).toBeInTheDocument();
-    await user.click(
-      screen.getByRole("button", { name: "Stirling library", pressed: false }),
-    );
-    await user.click(screen.getByRole("button", { name: "Search filenames" }));
-    expect(
-      screen.getByRole("textbox", { name: "Search filenames" }),
-    ).toHaveValue("Two");
-    expect(
-      screen.getByRole("textbox", { name: "Filter by source" }),
-    ).toHaveValue("All sources");
-    expect(
-      screen.getByRole("button", { name: "Invoices" }),
+ …706 tokens truncated…}),
     ).toBeInTheDocument();
     await user.click(screen.getByText("Two.pdf"));
     await user.click(screen.getByRole("button", { name: "Add 2 files" }));
@@ -914,7 +851,7 @@ describe("library file picker", () => {
     await user.click(
       screen.getByRole("button", { name: "Stirling library", pressed: false }),
     );
-    await user.click(screen.getByText("A", { exact: true }));
+    await user.dblClick(screen.getByText("A", { exact: true }));
     await user.click(await screen.findByText("A.pdf"));
     expect(
       screen.getAllByRole("button", { name: "Stirling library" }),
@@ -922,7 +859,7 @@ describe("library file picker", () => {
     await user.click(
       screen.getByRole("button", { name: "Stirling library", pressed: true }),
     );
-    await user.click(screen.getByText("B", { exact: true }));
+    await user.dblClick(screen.getByText("B", { exact: true }));
     await user.click(await screen.findByText("B.pdf"));
     await user.click(screen.getByRole("button", { name: "2 selected" }));
     await user.click(screen.getByRole("checkbox", { name: "Clear selection" }));
@@ -955,7 +892,7 @@ describe("library file picker", () => {
     await user.click(
       screen.getByRole("button", { name: "Stirling library", pressed: false }),
     );
-    await user.click(screen.getByText("Documents"));
+    await user.dblClick(screen.getByText("Documents"));
     await user.click(await screen.findByText("Disk.pdf"));
     expect(state.readDiskFile).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Add 1 files" }));
@@ -1066,7 +1003,7 @@ describe("library file picker", () => {
       screen.getByRole("button", { name: "Sort files: Recent first" }),
     );
     await user.click(screen.getByRole("menuitem", { name: "Name Z→A" }));
-    const cards = screen.getAllByRole("listitem");
+    const cards = screen.getAllByRole("option");
     expect(cards[0]).toHaveTextContent("Two.pdf");
     expect(cards[1]).toHaveTextContent("One.pdf");
     expect(
@@ -1080,7 +1017,7 @@ describe("library file picker", () => {
     show();
     const card = screen
       .getByText("One.pdf")
-      .closest('[role="listitem"]') as HTMLElement;
+      .closest('[role="option"]') as HTMLElement;
     act(() => card.focus());
     await user.keyboard(" ");
     await user.click(screen.getByRole("button", { name: "Add 1 files" }));

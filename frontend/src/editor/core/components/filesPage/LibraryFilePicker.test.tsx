@@ -433,7 +433,9 @@ describe("library file picker", () => {
       } else {
         await user.click(screen.getByText("Server.pdf"));
       }
-      const listing = screen.getByRole(viewMode === "list" ? "grid" : "listbox");
+      const listing = screen.getByRole(
+        viewMode === "list" ? "grid" : "listbox",
+      );
       expect(within(listing).queryByText("Recents")).not.toBeInTheDocument();
       await user.click(
         screen.getByRole("button", { name: "Recents", pressed: false }),
@@ -703,7 +705,70 @@ describe("library file picker", () => {
     });
     state.extractAllFiles.mockResolvedValue({
       success: true,
- …706 tokens truncated…}),
+      extractedFiles: [extracted],
+      errors: [],
+    });
+    const user = userEvent.setup();
+    const view = show(["pdf"]);
+    const archive = new File(["zip"], "Archive.zip", {
+      type: "application/zip",
+    });
+    fireEvent.change(view.container.querySelector('input[type="file"]')!, {
+      target: { files: [archive] },
+    });
+    await user.click(screen.getByRole("button", { name: "Unzip" }));
+    expect(await screen.findByText("Extracted.pdf")).toBeInTheDocument();
+    expect(state.selected).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Add 1 files" }));
+    await waitFor(() =>
+      expect(state.selected).toHaveBeenCalledExactlyOnceWith([], [extracted]),
+    );
+  });
+  it("restores each tab's folder and filters while keeping the cross-folder selection", async () => {
+    state.folders = [folder("folder", "Invoices")];
+    state.files[1] = file("two", "Two.pdf", "folder");
+    const user = userEvent.setup();
+    show();
+    await user.click(screen.getByRole("button", { name: "Search filenames" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Search filenames" }),
+      "One",
+    );
+    await user.click(screen.getByRole("textbox", { name: "Filter by source" }));
+    await user.click(await screen.findByRole("option", { name: "Local" }));
+    await user.click(screen.getByText("One.pdf"));
+    await user.click(
+      screen.getByRole("button", { name: "Stirling library", pressed: false }),
+    );
+    await user.dblClick(screen.getByText("Invoices"));
+    await user.click(screen.getByRole("button", { name: "Search filenames" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Search filenames" }),
+      "Two",
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Recents", pressed: false }),
+    );
+    await user.click(screen.getByRole("button", { name: "Search filenames" }));
+    expect(
+      screen.getByRole("textbox", { name: "Search filenames" }),
+    ).toHaveValue("One");
+    expect(
+      screen.getByRole("textbox", { name: "Filter by source" }),
+    ).toHaveValue("Local");
+    expect(screen.getByText("One.pdf")).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Stirling library", pressed: false }),
+    );
+    await user.click(screen.getByRole("button", { name: "Search filenames" }));
+    expect(
+      screen.getByRole("textbox", { name: "Search filenames" }),
+    ).toHaveValue("Two");
+    expect(
+      screen.getByRole("textbox", { name: "Filter by source" }),
+    ).toHaveValue("All sources");
+    expect(
+      screen.getByRole("button", { name: "Invoices" }),
     ).toBeInTheDocument();
     await user.click(screen.getByText("Two.pdf"));
     await user.click(screen.getByRole("button", { name: "Add 2 files" }));

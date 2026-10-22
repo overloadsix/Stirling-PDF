@@ -24,6 +24,13 @@ const render = (ui: Parameters<typeof baseRender>[0]) =>
   baseRender(ui, { wrapper: MantineProvider });
 // Every card renders this exactly once, so its calls are a per-card render count.
 const badgeRenders: { n: number } = { n: 0 };
+vi.mock("@app/components/filesPage/FileBrowsePreview", () => ({
+  FileBrowsePreview: ({ entry }: { entry?: { file?: { name: string } } }) => (
+    <section aria-label="Selected preview">
+      {entry?.file?.name ?? "Choose a file"}
+    </section>
+  ),
+}));
 vi.mock("@app/components/shared/PolicyBadges", () => ({
   PolicyBadges: () => {
     badgeRenders.n += 1;
@@ -44,6 +51,34 @@ const buildStub = (id: string, name: string): StirlingFileStub => ({
 });
 
 describe("FileGrid item memoization", () => {
+  it("selects a preview on one click and opens only on double click", () => {
+    const file = buildStub("preview-file", "preview.pdf");
+    const onOpenFile = vi.fn();
+    const onSelectFile = vi.fn();
+    const view = render(
+      <FileContextProvider>
+        <FileGrid
+          entries={[{ kind: "file", file }]}
+          viewMode="preview"
+          selectedFileIds={new Set<FileId>()}
+          onSelectFile={onSelectFile}
+          onOpenFile={onOpenFile}
+          onOpenFolder={() => {}}
+        />
+      </FileContextProvider>,
+    );
+    const row = view.container.querySelector(
+      ".files-page-list-row:not(.is-header)",
+    )!;
+    fireEvent.click(row);
+    expect(
+      screen.getByRole("region", { name: "Selected preview" }),
+    ).toHaveTextContent("preview.pdf");
+    expect(onSelectFile).toHaveBeenCalledWith(file.id, false, false);
+    expect(onOpenFile).not.toHaveBeenCalled();
+    fireEvent.doubleClick(row);
+    expect(onOpenFile).toHaveBeenCalledWith(file);
+  });
   it("re-renders only the cards whose selection changed", () => {
     badgeRenders.n = 0;
 

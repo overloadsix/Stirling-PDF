@@ -177,6 +177,20 @@ export function LibraryToolbar({
               </span>
             ),
           },
+          {
+            value: "preview",
+            label: (
+              <span
+                className="files-page-view-toggle-icon"
+                title={t("filesPage.viewMode.preview", "Preview view")}
+              >
+                <Icon name="rows-2" size={20} />
+                <span className="files-page-sr-only">
+                  {t("filesPage.viewMode.preview", "Preview view")}
+                </span>
+              </span>
+            ),
+          },
         ]}
       />
     </>

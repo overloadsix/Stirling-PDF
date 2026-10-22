@@ -763,6 +763,7 @@ export function LibraryFilePicker({
             ) : (
               <FileGrid
                 entries={entries}
+                getPreviewFile={(id) => uploads.get(id)?.file}
                 loading={library.loading || diskLoading}
                 selectedFileIds={selectedFileIds}
                 activeWorkspaceFileIds={activeWorkspaceFileIds}

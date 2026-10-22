@@ -44,7 +44,7 @@ import { useRoutedLibraryViewState } from "@app/components/filesPage/useRoutedLi
 import { useAppConfig } from "@app/contexts/AppConfigContext";
 import { useAuth } from "@app/auth/UseSession";
 
-export const FILES_PAGE_VIEW_MODES = ["grid", "list"] as const;
+export const FILES_PAGE_VIEW_MODES = ["grid", "list", "preview"] as const;
 export type FilesPageViewMode = (typeof FILES_PAGE_VIEW_MODES)[number];
 export type FilesPageSortMode =
   | "name-asc"

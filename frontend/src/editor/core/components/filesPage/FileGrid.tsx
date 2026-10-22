@@ -7,7 +7,9 @@ import { Icon } from "@app/ui/Icon";
 import {
   selectDesktopNode,
   useDesktopSelection,
+  useDesktopActiveSelection,
 } from "@app/hooks/useDesktopSelection";
+import { FileBrowsePreview } from "@app/components/filesPage/FileBrowsePreview";
 import { PolicyBadges as PolicyBadgeRow } from "@app/components/shared/PolicyBadges";
 import type { FileItemPolicyRef } from "@app/components/shared/PolicyBadges";
 import { FileId } from "@app/types/file";
@@ -61,7 +63,7 @@ import { OpenInNewWindowMenuItem } from "@app/components/filesPage/OpenInNewWind
 import { useLongPress } from "@app/components/filesPage/useLongPress";
 import { useIsTouch } from "@app/hooks/useIsMobile";
 
-export type FilesPageViewMode = "grid" | "list";
+export type FilesPageViewMode = "grid" | "list" | "preview";
 
 function formatCompactDate(ms: number): string {
   if (!ms) return "";
@@ -106,6 +108,7 @@ export interface FileGridPicker {
 }
 
 interface FileGridProps {
+  getPreviewFile?: (id: FileId) => File | undefined;
   picker?: FileGridPicker;
   entries: FilesPageEntry[];
   selectedFileIds: Set<FileId>;
@@ -229,6 +232,7 @@ export function FileGrid(props: FileGridProps & { loading?: boolean }) {
   } = props;
 
   const latest = useRef(props);
+  const activeSelection = useDesktopActiveSelection();
   latest.current = props;
   const touchSelection = useIsTouch() && !props.picker;
   const { t } = useTranslation();
@@ -255,8 +259,10 @@ export function FileGrid(props: FileGridProps & { loading?: boolean }) {
       );
     };
     return {
-      selectDiskFile: (entry, shift) =>
-        latest.current.picker?.onSelectDiskFile(entry, shift),
+      selectDiskFile: (entry, shift) => {
+        selectDesktopNode({ kind: "file", id: entry.path });
+        latest.current.picker?.onSelectDiskFile(entry, shift);
+      },
       unzipFile: (file) => latest.current.picker?.onUnzipFile(file),
       selectFile: (id, shiftKey, ctrlKey) =>
         latest.current.onSelectFile(id, shiftKey, ctrlKey),
@@ -309,6 +315,39 @@ export function FileGrid(props: FileGridProps & { loading?: boolean }) {
       duplicateFile: (file) => latest.current.onDuplicateFile?.(file),
     };
   }, []);
+
+  if (viewMode === "preview") {
+    const selectedEntry =
+      entries.find((entry) =>
+        activeSelection?.kind === "file"
+          ? entry.file?.id === activeSelection.id ||
+            entry.disk?.path === activeSelection.id
+          : activeSelection?.kind === "folder" &&
+            entry.folder?.id === activeSelection.id,
+      ) ??
+      entries.find(
+        (entry) => entry.file && props.selectedFileIds.has(entry.file.id),
+      ) ??
+      entries.find(
+        (entry) =>
+          entry.disk && props.picker?.selectedDiskPaths.has(entry.disk.path),
+      );
+    return (
+      <div className="files-page-preview-split">
+        <FileBrowsePreview
+          entry={selectedEntry}
+          suppliedFile={
+            selectedEntry?.file
+              ? props.getPreviewFile?.(selectedEntry.file.id)
+              : undefined
+          }
+        />
+        <div className="files-page-preview-list">
+          <FileGrid {...props} viewMode="list" />
+        </div>
+      </div>
+    );
+  }
 
   if (loading && entries.length === 0) {
     return (

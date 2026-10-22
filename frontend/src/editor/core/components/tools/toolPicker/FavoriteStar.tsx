@@ -43,6 +43,7 @@ const FavoriteStar: React.FC<FavoriteStarProps> = ({
       onMouseDown={(e: React.MouseEvent) => {
         e.stopPropagation();
       }}
+      onDoubleClick={(e: React.MouseEvent) => e.stopPropagation()}
       onKeyDown={(e: React.KeyboardEvent) => {
         e.stopPropagation();
       }}

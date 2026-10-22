@@ -4,6 +4,10 @@ import { Checkbox, Loader, Menu, Tooltip } from "@mantine/core";
 import { Button } from "@app/ui/Button";
 import { ActionIcon } from "@app/ui/ActionIcon";
 import { Icon } from "@app/ui/Icon";
+import {
+  selectDesktopNode,
+  useDesktopSelection,
+} from "@app/hooks/useDesktopSelection";
 import { PolicyBadges as PolicyBadgeRow } from "@app/components/shared/PolicyBadges";
 import type { FileItemPolicyRef } from "@app/components/shared/PolicyBadges";
 import { FileId } from "@app/types/file";
@@ -227,8 +231,6 @@ export function FileGrid(props: FileGridProps & { loading?: boolean }) {
   const latest = useRef(props);
   latest.current = props;
   const touchSelection = useIsTouch() && !props.picker;
-  const touchSelectionRef = useRef(touchSelection);
-  touchSelectionRef.current = touchSelection;
   const { t } = useTranslation();
   const translateRef = useRef(t);
   translateRef.current = t;
@@ -258,15 +260,10 @@ export function FileGrid(props: FileGridProps & { loading?: boolean }) {
       unzipFile: (file) => latest.current.picker?.onUnzipFile(file),
       selectFile: (id, shiftKey, ctrlKey) =>
         latest.current.onSelectFile(id, shiftKey, ctrlKey),
-      activateFile: (file, canOpen, shiftKey, ctrlKey) => {
-        const { onSelectFile, onOpenFile, selectedFileIds } = latest.current;
-        if (!touchSelectionRef.current) {
-          onSelectFile(file.id, shiftKey, ctrlKey);
-        } else if (selectedFileIds.size > 0) {
-          onSelectFile(file.id, false, true);
-        } else if (canOpen) {
-          onOpenFile(file);
-        }
+      activateFile: (file, _canOpen, shiftKey, ctrlKey) => {
+        const { onSelectFile } = latest.current;
+        selectDesktopNode({ kind: "file", id: file.id });
+        onSelectFile(file.id, shiftKey, ctrlKey);
       },
       toggleFile: (id) => latest.current.onSelectFile(id, false, true),
       openFolder: (id) => latest.current.onOpenFolder(id),
@@ -398,7 +395,7 @@ function SkeletonGrid({
     );
   }
   return (
-    <div className="files-page-grid" role="list" aria-busy="true">
+    <div className="files-page-grid" role="listbox" aria-busy="true">
       {placeholders.map((_, i) => (
         <div key={i} className="files-page-card files-page-skeleton-card">
           <div className="files-page-card-thumb files-page-skeleton-bar" />
@@ -571,7 +568,13 @@ function GridView({
   );
   return (
     // Cards contain menus and checkboxes; retain list semantics and name selected cards explicitly.
-    <div className="files-page-grid" role="list" ref={setContainer}>
+    <div
+      className="files-page-grid"
+      role="listbox"
+      aria-multiselectable="true"
+      aria-label={t("filesPage.files", "Files")}
+      ref={setContainer}
+    >
       {padTop > 0 && (
         <div
           aria-hidden="true"
@@ -678,6 +681,7 @@ const FolderCard = React.memo(function FolderCard({
 }: FolderItemProps) {
   const { t } = useTranslation();
   const onOpen = () => actions.openFolder(folder.id);
+  const selection = useDesktopSelection("folder", folder.id);
   // Mounted folders are managed on disk; only server folders can be offline.
   const kind = folderKind(folder);
   const {
@@ -728,7 +732,8 @@ const FolderCard = React.memo(function FolderCard({
 
   return (
     <div
-      role="listitem"
+      role="option"
+      aria-selected={selection.selected}
       tabIndex={0}
       draggable={!selectionOnly}
       onDragStart={(e) => {
@@ -742,8 +747,13 @@ const FolderCard = React.memo(function FolderCard({
         e.dataTransfer.effectAllowed = "move";
       }}
       {...(selectionOnly ? {} : dropHandlers)}
-      className={`files-page-card is-folder${isDropTarget ? " is-drop-target" : ""}`}
-      onClick={onOpen}
+      className={`files-page-card is-folder${selection.selected ? " selected-file-node" : ""}${isDropTarget ? " is-drop-target" : ""}`}
+      aria-current={selection.selected ? "true" : undefined}
+      onClick={selection.onClick}
+      onDoubleClick={(event) => {
+        if (!(event.target as HTMLElement).closest("button,[role=button]"))
+          onOpen();
+      }}
       onContextMenu={(e) => {
         e.preventDefault();
         kebabRef.current?.click();
@@ -1263,7 +1273,8 @@ const FileCard = React.memo(function FileCard({
   return (
     <div
       ref={cardRef}
-      role="listitem"
+      role="option"
+      aria-selected={isSelected}
       aria-label={
         isSelected
           ? t("filesPage.selectedFile", "{{name}}, selected", {
@@ -1277,7 +1288,12 @@ const FileCard = React.memo(function FileCard({
       onDragStart={handleDragStart}
       {...longPress.handlers}
       onClick={onClick}
-      onDoubleClick={onDoubleClick}
+      onDoubleClick={(event) => {
+        if (
+          !(event.target as HTMLElement).closest("button,[role=button],input")
+        )
+          onDoubleClick();
+      }}
       onContextMenu={handleContextMenu}
       onKeyDown={(e) => {
         if (e.key === " " && selectionOnly) {
@@ -1634,6 +1650,7 @@ const FolderRow = React.memo(function FolderRow({
 }: FolderItemProps) {
   const { t } = useTranslation();
   const onOpen = () => actions.openFolder(folder.id);
+  const selection = useDesktopSelection("folder", folder.id);
 
   const kind = folderKind(folder);
   const folderKindLabel =
@@ -1704,7 +1721,12 @@ const FolderRow = React.memo(function FolderRow({
         e.dataTransfer.effectAllowed = "move";
       }}
       {...(selectionOnly ? {} : dropHandlers)}
-      onClick={onOpen}
+      onClick={selection.onClick}
+      onDoubleClick={(event) => {
+        if (!(event.target as HTMLElement).closest("button,[role=button]"))
+          onOpen();
+      }}
+      aria-selected={selection.selected}
       onContextMenu={(e) => {
         e.preventDefault();
         kebabRef.current?.click();
@@ -1712,7 +1734,7 @@ const FolderRow = React.memo(function FolderRow({
       onKeyDown={(e) => {
         if (e.target === e.currentTarget && e.key === "Enter") onOpen();
       }}
-      className={`files-page-list-row${isDropTarget ? " is-drop-target" : ""}`}
+      className={`files-page-list-row${selection.selected ? " selected-file-node" : ""}${isDropTarget ? " is-drop-target" : ""}`}
     >
       {selectionColumn && <span aria-hidden="true" />}
 
@@ -1931,7 +1953,12 @@ const FileRow = React.memo(function FileRow({
       }}
       {...longPress.handlers}
       onClick={onClick}
-      onDoubleClick={onOpen}
+      onDoubleClick={(event) => {
+        if (
+          !(event.target as HTMLElement).closest("button,[role=button],input")
+        )
+          onOpen();
+      }}
       onContextMenu={(e) => {
         e.preventDefault();
         if (longPress.consumeGesture()) return;
@@ -2098,6 +2125,7 @@ const DiskFileCard = React.memo(function DiskFileCard({
   actions: FileGridActions;
 }) {
   const locked = processingLocked || Boolean(disabledReason);
+  const selection = useDesktopSelection("file", entry.path);
   const onOpen = () => {
     if (!locked) actions.openDiskFile(entry);
   };
@@ -2108,8 +2136,9 @@ const DiskFileCard = React.memo(function DiskFileCard({
   const isPdf = extension === "PDF";
   return (
     <div
-      className={`files-page-card${locked ? " is-locked" : ""}${isSelected ? " is-selected" : ""}`}
-      role="listitem"
+      className={`files-page-card${locked ? " is-locked" : ""}${isSelected || selection.selected ? " is-selected selected-file-node" : ""}`}
+      role="option"
+      aria-selected={isSelected || selection.selected}
       tabIndex={0}
       aria-label={
         isSelected
@@ -2120,6 +2149,7 @@ const DiskFileCard = React.memo(function DiskFileCard({
       }
       aria-disabled={locked}
       onClick={(event) => {
+        if (!locked) selection.select();
         if (selectionOnly && !locked)
           actions.selectDiskFile(entry, event.shiftKey);
       }}
@@ -2255,6 +2285,7 @@ const DiskFileRow = React.memo(function DiskFileRow({
   actions: FileGridActions;
 }) {
   const locked = processingLocked || Boolean(disabledReason);
+  const selection = useDesktopSelection("file", entry.path);
   const onOpen = () => {
     if (!locked) actions.openDiskFile(entry);
   };
@@ -2266,13 +2297,14 @@ const DiskFileRow = React.memo(function DiskFileRow({
     <div
       role="row"
       tabIndex={0}
-      aria-selected={isSelected}
+      aria-selected={isSelected || selection.selected}
       aria-disabled={locked}
       onClick={(event) => {
+        if (!locked) selection.select();
         if (selectionOnly && !locked)
           actions.selectDiskFile(entry, event.shiftKey);
       }}
-      className={`files-page-list-row${locked ? " is-locked" : ""}${isSelected ? " is-selected" : ""}`}
+      className={`files-page-list-row${locked ? " is-locked" : ""}${isSelected || selection.selected ? " is-selected selected-file-node" : ""}`}
       onDoubleClick={onOpen}
       onKeyDown={(e) => {
         if (e.key === " " && selectionOnly) {

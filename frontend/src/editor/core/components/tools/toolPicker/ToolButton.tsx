@@ -6,7 +6,7 @@ import { Tooltip } from "@app/components/shared/Tooltip";
 import { ToolIcon } from "@app/components/shared/ToolIcon";
 import { ToolRegistryEntry } from "@app/data/toolsTaxonomy";
 import { useToolNavigation } from "@app/hooks/useToolNavigation";
-import { handleUnlessSpecialClick } from "@app/utils/clickHandlers";
+import { useDesktopSelection } from "@app/hooks/useDesktopSelection";
 import FitText from "@app/components/shared/FitText";
 import { useHotkeys } from "@app/contexts/HotkeyContext";
 import HotkeyDisplay from "@app/components/hotkeys/HotkeyDisplay";
@@ -52,6 +52,7 @@ const ToolButton: React.FC<ToolButtonProps> = ({
   badgeCount,
 }) => {
   const { t } = useTranslation();
+  const selection = useDesktopSelection("tool", id);
   const { config } = useAppConfig();
   const premiumEnabled = config?.premiumEnabled;
   const { isFavorite, toolAvailability } = useToolWorkflowData();
@@ -225,27 +226,39 @@ const ToolButton: React.FC<ToolButtonProps> = ({
     </div>
   );
 
-  const handleExternalClick = (e: React.MouseEvent) => {
-    handleUnlessSpecialClick(e, () => handleClick(id));
+  const activate = (e: React.MouseEvent) => {
+    e.preventDefault();
+    selection.select();
+    if (navProps) navProps.onClick(e);
+    else handleClick(id);
   };
 
-  const selectedBg = isSelected
-    ? { backgroundColor: "var(--tool-button-selected-bg)" }
-    : {};
+  const selectedBg =
+    selection.selected || isSelected
+      ? { backgroundColor: "var(--tool-button-selected-bg)" }
+      : {};
 
   const buttonElement = navProps ? (
     // For internal tools with URLs, render Button as an anchor for proper link behavior
     <Button
       as="a"
       href={navProps.href}
-      onClick={navProps.onClick}
+      onClick={selection.onClick}
+      onDoubleClick={activate}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleClick(id);
+        }
+      }}
+      aria-pressed={selection.selected}
       variant="tertiary"
       accent="neutral"
       size="sm"
       p="none"
       fullWidth
       justify="start"
-      className="tool-button"
+      className={`tool-button${selection.selected ? " selected-file-node" : ""}`}
       data-tour={`tool-button-${id}`}
       leftSection={buttonIcon}
       style={{
@@ -263,14 +276,22 @@ const ToolButton: React.FC<ToolButtonProps> = ({
       href={tool.link}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={handleExternalClick}
+      onClick={selection.onClick}
+      onDoubleClick={activate}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleClick(id);
+        }
+      }}
+      aria-pressed={selection.selected}
       variant="tertiary"
       accent="neutral"
       size="sm"
       p="none"
       fullWidth
       justify="start"
-      className="tool-button"
+      className={`tool-button${selection.selected ? " selected-file-node" : ""}`}
       data-tour={`tool-button-${id}`}
       leftSection={buttonIcon}
       style={{
@@ -286,12 +307,17 @@ const ToolButton: React.FC<ToolButtonProps> = ({
     <Button
       variant="tertiary"
       accent="neutral"
-      onClick={() => handleClick(id)}
+      onClick={(e) => {
+        if (e.detail === 0) handleClick(id);
+        else selection.onClick(e);
+      }}
+      onDoubleClick={activate}
+      aria-pressed={selection.selected}
       size="sm"
       p="none"
       fullWidth
       justify="start"
-      className="tool-button"
+      className={`tool-button${selection.selected ? " selected-file-node" : ""}`}
       aria-disabled={isUnavailable}
       data-tour={`tool-button-${id}`}
       leftSection={buttonIcon}

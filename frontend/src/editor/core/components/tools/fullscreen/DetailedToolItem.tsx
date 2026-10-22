@@ -15,6 +15,7 @@ import {
   resolveDisabledMessage,
 } from "@app/components/tools/fullscreen/shared";
 import { Button } from "@app/ui/Button";
+import { useDesktopSelection } from "@app/hooks/useDesktopSelection";
 
 interface DetailedToolItemProps {
   id: string;
@@ -30,6 +31,7 @@ const DetailedToolItem: React.FC<DetailedToolItemProps> = ({
   onClick,
 }) => {
   const { t } = useTranslation();
+  const selection = useDesktopSelection("tool", id);
   const { binding, isFav, toggleFavorite, disabled, disabledReason } =
     useToolMeta(id, tool);
 
@@ -57,8 +59,16 @@ const DetailedToolItem: React.FC<DetailedToolItemProps> = ({
   return (
     <Button
       variant="tertiary"
-      className={`tool-panel__fullscreen-item ${getItemClasses(true)} ${isSelected ? "tool-panel__fullscreen-item--selected" : ""} tool-panel__fullscreen-item--with-star`}
-      onClick={onClick}
+      className={`tool-panel__fullscreen-item ${getItemClasses(true)} ${selection.selected || isSelected ? "tool-panel__fullscreen-item--selected selected-file-node" : ""} tool-panel__fullscreen-item--with-star`}
+      onClick={(event) => {
+        if (event.detail === 0) onClick();
+        else selection.onClick(event);
+      }}
+      onDoubleClick={() => {
+        selection.select();
+        onClick();
+      }}
+      aria-pressed={selection.selected}
       aria-disabled={disabled}
       disabled={disabled}
       data-tour={`tool-button-${id}`}

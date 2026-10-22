@@ -77,6 +77,7 @@ import { consumeProcessingFolderCreationRequest } from "@app/utils/pendingProces
 import type { FileSidebarProps } from "@app/components/shared/FileSidebar";
 
 import { Button } from "@app/ui/Button";
+import LegacyHome from "@app/components/home/LegacyHome";
 import "@app/components/layout/WorkspaceFrame.css";
 import "@app/pages/HomePage.css";
 
@@ -113,6 +114,7 @@ function readSwipeHintSeen(): boolean {
 type MobileView = "tools" | "workbench";
 
 export default function HomePage() {
+  const [legacyHomeOpen, setLegacyHomeOpen] = useState(true);
   const { t, i18n } = useTranslation();
   const policiesEnabled = usePoliciesEnabled();
   const { sidebarRefs } = useSidebarContext();
@@ -693,6 +695,141 @@ export default function HomePage() {
     </div>
   );
 
+  const workspace = (
+    <>
+      {" "}
+      {/* Keep signing in the same tree across breakpoints to preserve drafts and placed signatures. */}
+      {isMobile && navigationState.workbench !== "signing" ? (
+        <div className="mobile-layout" data-files-mode={isWorkspaceHub}>
+          {/* The library brings its own tabs and folder path, so the
+              tools/workspace toggle would only cost it vertical space. Every
+              other view keeps the toggle. */}
+          {!isWorkspaceHub && (
+            <div className="mobile-toggle">
+              <div className="mobile-brand">
+                <LogoIcon className="mobile-brand-icon" />
+                <Wordmark alt={brandAltText} className="mobile-brand-text" />
+              </div>
+              <div
+                className="mobile-toggle-buttons"
+                role="tablist"
+                aria-label={t(
+                  "home.mobile.viewSwitcher",
+                  "Switch workspace view",
+                )}
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeMobileView === "tools"}
+                  className={`mobile-toggle-button ${activeMobileView === "tools" ? "active" : ""}`}
+                  onClick={() => handleSelectMobileView("tools")}
+                >
+                  {t("home.mobile.tools", "Tools")}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeMobileView === "workbench"}
+                  className={`mobile-toggle-button ${activeMobileView === "workbench" ? "active" : ""}`}
+                  onClick={() => handleSelectMobileView("workbench")}
+                >
+                  {t("home.mobile.workspace", "Workspace")}
+                </button>
+              </div>
+            </div>
+          )}
+          {isWorkspaceHub ? (
+            /* /files takes the whole viewport. Skipping the slider keeps
+                the FileManagerView from being trapped inside a 100vw
+                horizontal-scroll container (which truncated buttons and
+                created a stray side-scroll surface on touch). */
+            <div className="mobile-files-full">
+              <div className="flex-1 min-h-0 flex" style={{ minWidth: 0 }}>
+                <Workbench />
+              </div>
+            </div>
+          ) : (
+            <div className="mobile-slider-wrap">
+              <div ref={sliderRef} className="mobile-slider">
+                <div
+                  className="mobile-slide"
+                  aria-label={t(
+                    "home.mobile.toolsSlide",
+                    "Tool selection panel",
+                  )}
+                >
+                  <div className="mobile-slide-content">
+                    <RightSidebar />
+                  </div>
+                </div>
+                <div
+                  className="mobile-slide"
+                  aria-label={t(
+                    "home.mobile.workbenchSlide",
+                    "Workspace panel",
+                  )}
+                >
+                  <div className="mobile-slide-content">
+                    <div
+                      className="flex-1 min-h-0 flex"
+                      style={{ minWidth: 0 }}
+                    >
+                      <Workbench />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {isTouch && showSwipeHint && (
+                <span className="mobile-swipe-hint" aria-hidden="true">
+                  {t(
+                    "home.mobile.swipeHint",
+                    "Swipe left or right to switch views",
+                  )}
+                </span>
+              )}
+            </div>
+          )}
+          {mobileNavigation}
+        </div>
+      ) : (
+        <Group
+          align={isMobile ? "stretch" : "flex-start"}
+          gap={0}
+          wrap="nowrap"
+          h="100%"
+          className="flex-nowrap flex"
+          bg="var(--c-bg)"
+          data-wings={wingsPhase ?? undefined}
+          style={{ flexDirection: isMobile ? "column" : "row" }}
+        >
+          {/* Reading leaves the document and nothing beside it, so the wing goes
+                rather than shrinking to a rail. Everywhere else it is fixed open. */}
+          {wingsMounted && navigationState.workbench !== "signing" && (
+            <div className="workspace-frame">
+              <MyFilesAwareFileSidebar
+                ref={quickAccessRef}
+                accountHoisted
+                active={navigationState.workbench === "myFiles"}
+                onOpenSettings={openSettings}
+                onRegisterOpenFromComputer={registerOpenFromComputer}
+              />
+            </div>
+          )}
+          <Workbench />
+          {isMobile && mobileNavigation}
+          {/* The reader's rail takes the slot the tool panel holds otherwise: the
+                panel's controls are the editor's, and reading wants the viewer's.
+                Both render together only while the panel is on its way out. */}
+          {wingsMounted && !hideToolPanel && <RightSidebar />}
+          {readerMode && <ReaderRail />}
+          {readerMode && !strip.enabled && <ReaderSuperSearch />}
+        </Group>
+      )}
+      <FileManager selectedTool={selectedTool} />
+    </>
+  );
+
   return (
     <div className="h-screen overflow-hidden">
       <HomePageExtensions />
@@ -715,135 +852,36 @@ export default function HomePage() {
         }
       />
       <FilesPageProvider>
-        {/* Keep signing in the same tree across breakpoints to preserve drafts and placed signatures. */}
-        {isMobile && navigationState.workbench !== "signing" ? (
-          <div className="mobile-layout" data-files-mode={isWorkspaceHub}>
-            {/* The library brings its own tabs and folder path, so the
-              tools/workspace toggle would only cost it vertical space. Every
-              other view keeps the toggle. */}
-            {!isWorkspaceHub && (
-              <div className="mobile-toggle">
-                <div className="mobile-brand">
-                  <LogoIcon className="mobile-brand-icon" />
-                  <Wordmark alt={brandAltText} className="mobile-brand-text" />
-                </div>
-                <div
-                  className="mobile-toggle-buttons"
-                  role="tablist"
-                  aria-label={t(
-                    "home.mobile.viewSwitcher",
-                    "Switch workspace view",
-                  )}
-                >
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={activeMobileView === "tools"}
-                    className={`mobile-toggle-button ${activeMobileView === "tools" ? "active" : ""}`}
-                    onClick={() => handleSelectMobileView("tools")}
-                  >
-                    {t("home.mobile.tools", "Tools")}
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={activeMobileView === "workbench"}
-                    className={`mobile-toggle-button ${activeMobileView === "workbench" ? "active" : ""}`}
-                    onClick={() => handleSelectMobileView("workbench")}
-                  >
-                    {t("home.mobile.workspace", "Workspace")}
-                  </button>
-                </div>
-              </div>
-            )}
-            {isWorkspaceHub ? (
-              /* /files takes the whole viewport. Skipping the slider keeps
-                the FileManagerView from being trapped inside a 100vw
-                horizontal-scroll container (which truncated buttons and
-                created a stray side-scroll surface on touch). */
-              <div className="mobile-files-full">
-                <div className="flex-1 min-h-0 flex" style={{ minWidth: 0 }}>
-                  <Workbench />
-                </div>
-              </div>
-            ) : (
-              <div className="mobile-slider-wrap">
-                <div ref={sliderRef} className="mobile-slider">
-                  <div
-                    className="mobile-slide"
-                    aria-label={t(
-                      "home.mobile.toolsSlide",
-                      "Tool selection panel",
-                    )}
-                  >
-                    <div className="mobile-slide-content">
-                      <RightSidebar />
-                    </div>
-                  </div>
-                  <div
-                    className="mobile-slide"
-                    aria-label={t(
-                      "home.mobile.workbenchSlide",
-                      "Workspace panel",
-                    )}
-                  >
-                    <div className="mobile-slide-content">
-                      <div
-                        className="flex-1 min-h-0 flex"
-                        style={{ minWidth: 0 }}
-                      >
-                        <Workbench />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {isTouch && showSwipeHint && (
-                  <span className="mobile-swipe-hint" aria-hidden="true">
-                    {t(
-                      "home.mobile.swipeHint",
-                      "Swipe left or right to switch views",
-                    )}
-                  </span>
-                )}
-              </div>
-            )}
-            {mobileNavigation}
-          </div>
+        {legacyHomeOpen &&
+        !selectedToolKey &&
+        !readerMode &&
+        location.pathname === EDITOR_BASENAME ? (
+          <LegacyHome
+            onLeave={() => setLegacyHomeOpen(false)}
+            onTools={() => {
+              setLegacyHomeOpen(false);
+              setLeftPanelView("toolPicker");
+            }}
+          />
         ) : (
-          <Group
-            align={isMobile ? "stretch" : "flex-start"}
-            gap={0}
-            wrap="nowrap"
-            h="100%"
-            className="flex-nowrap flex"
-            bg="var(--c-bg)"
-            data-wings={wingsPhase ?? undefined}
-            style={{ flexDirection: isMobile ? "column" : "row" }}
-          >
-            {/* Reading leaves the document and nothing beside it, so the wing goes
-                rather than shrinking to a rail. Everywhere else it is fixed open. */}
-            {wingsMounted && navigationState.workbench !== "signing" && (
-              <div className="workspace-frame">
-                <MyFilesAwareFileSidebar
-                  ref={quickAccessRef}
-                  accountHoisted
-                  active={navigationState.workbench === "myFiles"}
-                  onOpenSettings={openSettings}
-                  onRegisterOpenFromComputer={registerOpenFromComputer}
-                />
-              </div>
-            )}
-            <Workbench />
-            {isMobile && mobileNavigation}
-            {/* The reader's rail takes the slot the tool panel holds otherwise: the
-                panel's controls are the editor's, and reading wants the viewer's.
-                Both render together only while the panel is on its way out. */}
-            {wingsMounted && !hideToolPanel && <RightSidebar />}
-            {readerMode && <ReaderRail />}
-            {readerMode && !strip.enabled && <ReaderSuperSearch />}
-          </Group>
+          <>
+            <Button
+              variant="secondary"
+              style={{ position: "fixed", bottom: 12, right: 16, zIndex: 100 }}
+              onClick={() =>
+                requestNavigation(() => {
+                  handleBackToTools();
+                  setReaderMode(false);
+                  navigate(EDITOR_BASENAME);
+                  setLegacyHomeOpen(true);
+                })
+              }
+            >
+              Home
+            </Button>
+            {workspace}
+          </>
         )}
-        <FileManager selectedTool={selectedTool} />
       </FilesPageProvider>
     </div>
   );

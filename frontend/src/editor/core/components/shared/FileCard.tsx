@@ -9,6 +9,7 @@ import { getFileSize, getFileDate } from "@app/utils/fileUtils";
 import { useFileThumbnail } from "@app/hooks/useFileThumbnail";
 import DocumentThumbnail from "@app/components/shared/filePreview/DocumentThumbnail";
 import { LARGE_PDF_PARSE_LIMIT } from "@app/utils/thumbnailUtils";
+import { useDesktopSelection } from "@app/hooks/useDesktopSelection";
 
 interface FileCardProps {
   file: File;
@@ -34,6 +35,10 @@ const FileCard = ({
   isSupported = true,
 }: FileCardProps) => {
   const { t } = useTranslation();
+  const selection = useDesktopSelection(
+    "file",
+    fileStub?.id ?? `${file.name}:${file.size}:${file.lastModified}`,
+  );
   const {
     isEncrypted,
     thumbnail: thumb,
@@ -69,10 +74,31 @@ const FileCard = ({
         backgroundColor: isSelected ? "var(--mantine-color-blue-0)" : undefined,
         opacity: 1,
       }}
-      onDoubleClick={onDoubleClick}
+      role="option"
+      tabIndex={0}
+      aria-selected={isSelected ?? selection.selected}
+      className={
+        isSelected || selection.selected ? "selected-file-node" : undefined
+      }
+      onDoubleClick={(event) => {
+        if ((event.target as HTMLElement).closest("button")) return;
+        if (isSupported) onDoubleClick?.();
+      }}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === "Enter" && isSupported) onDoubleClick?.();
+        if (event.key === " ") {
+          event.preventDefault();
+          selection.select();
+          onSelect?.();
+        }
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={onSelect}
+      onClick={() => {
+        selection.select();
+        onSelect?.();
+      }}
       data-testid="file-card"
       data-tour="file-card-checkbox"
     >

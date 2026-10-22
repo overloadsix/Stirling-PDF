@@ -16,6 +16,7 @@ import {
   resolveDisabledMessage,
 } from "@app/components/tools/fullscreen/shared";
 import { Button } from "@app/ui/Button";
+import { useDesktopSelection } from "@app/hooks/useDesktopSelection";
 
 interface CompactToolItemProps {
   id: string;
@@ -33,6 +34,7 @@ const CompactToolItem: React.FC<CompactToolItemProps> = ({
   tooltipPortalTarget,
 }) => {
   const { t } = useTranslation();
+  const selection = useDesktopSelection("tool", id);
   const { binding, isFav, toggleFavorite, disabled, disabledReason } =
     useToolMeta(id, tool);
   const categoryColor = getSubcategoryColor(tool.subcategoryId);
@@ -72,8 +74,16 @@ const CompactToolItem: React.FC<CompactToolItemProps> = ({
       variant="tertiary"
       justify="start"
       fullWidth
-      className={`tool-panel__fullscreen-list-item ${getItemClasses(false)} ${isSelected ? "tool-panel__fullscreen-list-item--selected" : ""} ${!disabled ? "tool-panel__fullscreen-list-item--with-star" : ""}`}
-      onClick={onClick}
+      className={`tool-panel__fullscreen-list-item ${getItemClasses(false)} ${selection.selected || isSelected ? "tool-panel__fullscreen-list-item--selected selected-file-node" : ""} ${!disabled ? "tool-panel__fullscreen-list-item--with-star" : ""}`}
+      onClick={(event) => {
+        if (event.detail === 0) onClick();
+        else selection.onClick(event);
+      }}
+      onDoubleClick={() => {
+        selection.select();
+        onClick();
+      }}
+      aria-pressed={selection.selected}
       aria-disabled={disabled}
       disabled={disabled}
       data-tour={`tool-button-${id}`}

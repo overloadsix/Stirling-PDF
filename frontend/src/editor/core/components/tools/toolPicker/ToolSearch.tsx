@@ -8,6 +8,10 @@ import { TextInput } from "@app/components/shared/TextInput";
 import "@app/components/tools/toolPicker/ToolPicker.css";
 import { rankByFuzzy, idToWords } from "@app/utils/fuzzySearch";
 import { ToolId } from "@app/types/toolId";
+import {
+  selectDesktopNode,
+  useDesktopActiveSelection,
+} from "@app/hooks/useDesktopSelection";
 
 interface ToolSearchProps {
   value: string;
@@ -37,6 +41,7 @@ const ToolSearch = ({
   autoFocus = false,
 }: ToolSearchProps) => {
   const { t } = useTranslation();
+  const activeSelection = useDesktopActiveSelection();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -141,10 +146,26 @@ const ToolSearch = ({
               <Button
                 key={id}
                 variant="tertiary"
-                onClick={() => {
+                onClick={(event) => {
+                  if (event.detail !== 0) {
+                    selectDesktopNode({ kind: "tool", id });
+                    return;
+                  }
                   onToolSelect?.(id as ToolId);
                   setDropdownOpen(false);
                 }}
+                onDoubleClick={() => {
+                  onToolSelect?.(id as ToolId);
+                  setDropdownOpen(false);
+                }}
+                aria-pressed={
+                  activeSelection?.kind === "tool" && activeSelection.id === id
+                }
+                className={
+                  activeSelection?.kind === "tool" && activeSelection.id === id
+                    ? "selected-file-node"
+                    : undefined
+                }
                 leftSection={
                   <div style={{ color: "var(--c-text)" }}>{tool.icon}</div>
                 }

@@ -74,9 +74,9 @@ jobs:
             gh api --method POST "repos/$env:GITHUB_REPOSITORY/git/refs" -f "ref=refs/tags/$baselineTag" -f "sha=$baseline"
             if ($LASTEXITCODE -ne 0) { throw 'Could not preserve the baseline tag.' }
           }
-          $tag = "v3.2.1-adobe-legacy.$env:GITHUB_RUN_NUMBER"
+          $tag = "v3.2.1-click-behavior.$env:GITHUB_RUN_NUMBER"
           $notes = @'
-          Windows desktop installer for the Stirling PDF fork with desktop selection behavior and a three-pane home interface.
+          Windows desktop installer with the original fork interface and single-click selection / double-click activation behavior only.
 
           Includes the native Tauri application, PDF backend, and bundled Java runtime. This is a custom unsigned build.
 
@@ -85,5 +85,5 @@ jobs:
           $notes | Set-Content -Encoding utf8 release-notes.txt
           $installer = (Get-ChildItem frontend/src-tauri/target/release/bundle/nsis/*-setup.exe).FullName
           $checksums = (Get-ChildItem frontend/src-tauri/target/release/bundle/nsis/SHA256SUMS.txt).FullName
-          gh release create $tag $installer $checksums --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'Stirling PDF Windows Desktop - Legacy Home' --notes-file release-notes.txt --prerelease
+          gh release create $tag $installer $checksums --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title 'Stirling PDF Windows Desktop - Original Interface' --notes-file release-notes.txt --prerelease
           if ($LASTEXITCODE -ne 0) { throw 'Could not publish the Windows installer.' }

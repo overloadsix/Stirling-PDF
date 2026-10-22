@@ -270,9 +270,7 @@ describe("startup prompts", () => {
         "false",
       );
       fireEvent.click(screen.getByText("Finish MFA"));
-      expect(
-        await screen.findByText("Company agreement", {}, { timeout: 8000 }),
-      ).toBeVisible();
+      expect(await screen.findByText("Company agreement")).toBeVisible();
       expect(h.tracking).not.toHaveBeenCalled();
       fireEvent.click(
         screen.getByRole("button", { name: "loginAgreementAccept" }),
@@ -312,7 +310,7 @@ describe("startup prompts", () => {
       format: "markdown",
     };
     const editor = renderAt("/editor");
-    await screen.findByText("Company agreement", {}, { timeout: 8000 });
+    await screen.findByText("Company agreement");
     fireEvent.click(
       screen.getByRole("button", { name: "loginAgreementAccept" }),
     );
@@ -353,7 +351,7 @@ describe("startup prompts", () => {
     };
     h.auth.signOut.mockReturnValue(new Promise(() => {}));
     renderAt("/processor");
-    await screen.findByText("Company agreement", {}, { timeout: 8000 });
+    await screen.findByText("Company agreement");
     fireEvent.click(
       screen.getByRole("button", { name: "loginAgreementDecline" }),
     );

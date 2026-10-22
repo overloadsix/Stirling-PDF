@@ -62,23 +62,25 @@ describe.each(["grid", "list"] as const)(
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());
 
-    it("opens a file on tap when nothing is selected", () => {
+    it("selects a file on tap without opening it", () => {
       const onOpenFile = vi.fn();
       const onSelectFile = vi.fn();
       const { item } = renderGrid(mode, [], { onOpenFile, onSelectFile });
       fireEvent.click(item(0));
-      expect(onOpenFile).toHaveBeenCalledWith(
+      expect(onSelectFile).toHaveBeenCalledWith("a", false, false);
+      expect(onOpenFile).not.toHaveBeenCalled();
+      fireEvent.doubleClick(item(0));
+      expect(onOpenFile).toHaveBeenCalledExactlyOnceWith(
         expect.objectContaining({ id: "a" }),
       );
-      expect(onSelectFile).not.toHaveBeenCalled();
     });
 
-    it("toggles a file on tap while a selection is in progress", () => {
+    it("selects another file on tap while a selection is in progress", () => {
       const onOpenFile = vi.fn();
       const onSelectFile = vi.fn();
       const { item } = renderGrid(mode, ["a"], { onOpenFile, onSelectFile });
       fireEvent.click(item(1));
-      expect(onSelectFile).toHaveBeenCalledWith("b", false, true);
+      expect(onSelectFile).toHaveBeenCalledWith("b", false, false);
       expect(onOpenFile).not.toHaveBeenCalled();
     });
 

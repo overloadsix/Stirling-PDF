@@ -13,12 +13,16 @@ task frontend:check
 task frontend:build:proprietary
 ./gradlew build -PbuildWithFrontend=true -x test
 docker build -t stirling-pdf:custom -f docker/embedded/Dockerfile .
+task frontend:typecheck:desktop
+task desktop:build:dev:windows
 git diff --check
 git add -- frontend/src/editor/core/components/home/LegacyHome.tsx frontend/src/editor/core/components/home/LegacyHome.css \
   frontend/src/editor/core/hooks/useDesktopSelection.ts frontend/src/editor/core/hooks/useDesktopSelection.test.tsx \
   frontend/src/editor/core/styles/desktopSelection.css frontend/src/editor/core/pages/HomePage.tsx \
   frontend/src/editor/core/components/filesPage/FileGrid.tsx frontend/src/editor/core/components/shared/FileCard.tsx \
   frontend/src/editor/core/components/filesPage/FileGrid.accessibility.test.tsx \
+  frontend/src/editor/core/components/filesPage/FileGrid.touch.test.tsx \
+  frontend/src/editor/core/components/startup/StartupPrompts.test.tsx \
   frontend/src/editor/core/components/filesPage/LibraryFilePicker.test.tsx \
   frontend/src/editor/core/components/tools/toolPicker/ToolButton.tsx \
   frontend/src/editor/core/components/tools/toolPicker/ToolSearch.tsx \
@@ -27,7 +31,7 @@ git add -- frontend/src/editor/core/components/home/LegacyHome.tsx frontend/src/
   frontend/src/editor/core/components/tools/fullscreen/CompactToolItem.tsx \
   frontend/src/editor/core/components/tools/fullscreen/DetailedToolItem.tsx \
   frontend/src/editor/core/components/home/LegacyHome.test.tsx setup_and_snapshot.sh build_and_push.sh \
-  .github/workflows/adobe-legacy-release.yml
+  .github/workflows/adobe-legacy-release.yml .github/workflows/adobe-legacy-desktop.yml
 if ! git diff --cached --quiet; then
   git commit -m 'Feat: Implement desktop click semantics and Adobe legacy landing interface layout'
 fi

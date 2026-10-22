@@ -5181,9 +5181,17 @@ allTypes = "All types"
 label = "Filter by type"
 
 [filesPage.viewMode]
+preview = "Preview view"
 grid = "Grid view"
 label = "View mode"
 list = "List view"
+
+[filesPage.preview]
+choose = "Select a file to preview"
+folder = "Open a folder to browse its files"
+unavailable = "Preview unavailable for this file"
+previousPage = "Previous page"
+nextPage = "Next page"
 
 [fileStorage.unreadable]
 body = "\"{{name}}\" is saved in this browser but its contents can no longer be read. Upload the file again to keep working on it."

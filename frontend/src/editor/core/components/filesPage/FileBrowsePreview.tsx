@@ -133,7 +133,7 @@ export function FileBrowsePreview({
             <ActionIcon
               variant="tertiary"
               size="sm"
-              aria-label={t("pdfViewer.previousPage", "Previous page")}
+                aria-label={t("filesPage.preview.previousPage", "Previous page")}
               disabled={pageIndex === 0}
               onClick={() => setPage({ identity, index: pageIndex - 1 })}
             >
@@ -145,7 +145,7 @@ export function FileBrowsePreview({
             <ActionIcon
               variant="tertiary"
               size="sm"
-              aria-label={t("pdfViewer.nextPage", "Next page")}
+                aria-label={t("filesPage.preview.nextPage", "Next page")}
               disabled={pageIndex + 1 >= (current?.pages ?? 1)}
               onClick={() => setPage({ identity, index: pageIndex + 1 })}
             >

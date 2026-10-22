@@ -5047,9 +5047,17 @@ allTypes = "All types"
 label = "Filter by type"
 
 [filesPage.viewMode]
+preview = "Preview view"
 grid = "Grid view"
 label = "View mode"
 list = "List view"
+
+[filesPage.preview]
+choose = "Select a file to preview"
+folder = "Open a folder to browse its files"
+unavailable = "Preview unavailable for this file"
+previousPage = "Previous page"
+nextPage = "Next page"
 
 [fileToPDF]
 tags = "transformation,format,document,picture,slide,text,conversion,office,docs,word,excel,powerpoint"
